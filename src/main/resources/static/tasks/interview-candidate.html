@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Candidate</title>
+    <link rel="stylesheet" href="/tasks/common.css">
+</head>
+<body>
+<div class="container">
+    <h1>Interview Candidate</h1>
+    <div class="task-id" id="task-key-display"></div>
+
+    <div class="card">
+        <h2>Candidate Information</h2>
+        <div class="info-row"><span class="label">Name:</span> <span id="candidateName">Loading...</span></div>
+        <div class="info-row"><span class="label">Email:</span> <span id="candidateEmail">Loading...</span></div>
+    </div>
+
+    <div class="card">
+        <h2>Interview Assessment</h2>
+        <form id="interview-form" onsubmit="handleSubmit(event)">
+            <div class="form-group">
+                <label for="interviewRating">Overall Rating *</label>
+                <select id="interviewRating" required>
+                    <option value="">-- Select --</option>
+                    <option value="5">5 - Excellent</option>
+                    <option value="4">4 - Good</option>
+                    <option value="3">3 - Average</option>
+                    <option value="2">2 - Below Average</option>
+                    <option value="1">1 - Poor</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="technicalSkills">Technical Skills Assessment</label>
+                <textarea id="technicalSkills" placeholder="Evaluate technical competency..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="communicationSkills">Communication Skills Assessment</label>
+                <textarea id="communicationSkills" placeholder="Evaluate communication and soft skills..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="interviewNotes">Additional Notes</label>
+                <textarea id="interviewNotes" placeholder="Any other observations..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="recommendation">Recommendation *</label>
+                <select id="recommendation" required>
+                    <option value="">-- Select --</option>
+                    <option value="STRONG_HIRE">Strong Hire</option>
+                    <option value="HIRE">Hire</option>
+                    <option value="NO_HIRE">No Hire</option>
+                    <option value="STRONG_NO_HIRE">Strong No Hire</option>
+                </select>
+            </div>
+            <div class="btn-row">
+                <button type="submit" class="btn btn-primary">Submit Assessment</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/tasks/common.js"></script>
+<script>
+    async function loadCandidateInfo() {
+        try {
+            const vars = await getTaskVariables();
+            // The multi-instance subprocess maps inputElement="shortlistedCandidate"
+            const candidate = vars.shortlistedCandidate || {};
+            document.getElementById('candidateName').textContent = candidate.candidateName || vars.candidateName || '-';
+            document.getElementById('candidateEmail').textContent = candidate.candidateEmail || vars.candidateEmail || '-';
+        } catch (err) {
+            document.getElementById('candidateName').textContent = '-';
+            document.getElementById('candidateEmail').textContent = '-';
+            showToast('Could not load candidate info: ' + err.message, 'error');
+        }
+    }
+
+    async function handleSubmit(e) {
+        e.preventDefault();
+        try {
+            // Return ONE interviewed candidate (an object, not a list).
+            // The BPMN multi-instance outputElement is "=interviewedCandidate"; Camunda collects
+            // the objects from all instances into the outputCollection "shortlistedInterviewedCandidates".
+            const vars = await getTaskVariables();
+            const candidate = vars.shortlistedCandidate || {};
+
+            await completeTask({
+                interviewedCandidate: {
+                    candidateName: candidate.candidateName || null,
+                    candidateEmail: candidate.candidateEmail || null,
+                    applicationId: candidate.applicationId || null,
+                    interviewRating: parseInt(document.getElementById('interviewRating').value),
+                    technicalSkills: document.getElementById('technicalSkills').value || null,
+                    communicationSkills: document.getElementById('communicationSkills').value || null,
+                    interviewNotes: document.getElementById('interviewNotes').value || null,
+                    recommendation: document.getElementById('recommendation').value
+                }
+            });
+            showCompleted();
+        } catch (err) {
+            showToast('Failed: ' + err.message, 'error');
+        }
+    }
+
+    loadCandidateInfo();
+</script>
+</body>
+</html>

@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Position Validation</title>
+    <link rel="stylesheet" href="/tasks/common.css">
+</head>
+<body>
+<div class="container">
+    <h1>Job Position Validation</h1>
+    <div class="task-id" id="task-key-display"></div>
+
+    <div class="card">
+        <h2>Position Details</h2>
+        <p style="color:#666; margin-bottom:16px;">Review the position specification below and approve or reject it.</p>
+        <div class="form-group">
+            <label>Position Title</label>
+            <input type="text" id="title" readonly>
+        </div>
+        <div class="form-group">
+            <label>Description</label>
+            <textarea id="description" readonly></textarea>
+        </div>
+        <div class="form-group">
+            <label>Department</label>
+            <input type="text" id="department" readonly>
+        </div>
+        <div class="form-group">
+            <label>Location</label>
+            <input type="text" id="location" readonly>
+        </div>
+        <div class="form-group">
+            <label>Requester</label>
+            <input type="text" id="requester" readonly>
+        </div>
+        <div class="form-group">
+            <label>Requester Email</label>
+            <input type="text" id="requesterEmail" readonly>
+        </div>
+        <div class="form-group">
+            <label>Application Deadline</label>
+            <input type="text" id="applicationDeadline" readonly>
+        </div>
+        <div class="form-group">
+            <label>Expected Monthly Salary</label>
+            <input type="text" id="expectedSalary" readonly>
+        </div>
+        <div class="form-group">
+            <label>Managerial Position</label>
+            <input type="text" id="managerialPosition" readonly>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Validation Decision</h2>
+        <div class="form-group">
+            <label for="validationComment">Comment (optional)</label>
+            <textarea id="validationComment" placeholder="Add any notes about this position..."></textarea>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-danger" onclick="handleDecision('NOK')">Reject (NOK)</button>
+            <button class="btn btn-success" onclick="handleDecision('OK')">Approve (OK)</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/tasks/common.js"></script>
+<script>
+    async function loadPositionData() {
+        try {
+            const vars = await getTaskVariables();
+            const fields = ['title', 'description', 'department', 'location', 'requester', 'requesterEmail', 'applicationDeadline', 'expectedSalary'];
+            fields.forEach(f => {
+                if (vars[f] !== undefined && vars[f] !== null) {
+                    document.getElementById(f).value = vars[f];
+                }
+            });
+            if (vars.managerialPosition !== undefined) {
+                document.getElementById('managerialPosition').value = vars.managerialPosition === true ? 'Yes' : 'No';
+            }
+        } catch (err) {
+            showToast('Could not load position data: ' + err.message, 'error');
+        }
+    }
+
+    async function handleDecision(result) {
+        try {
+            await completeTask({
+                hrCheckResult: result,
+                validationComment: document.getElementById('validationComment').value || null
+            });
+            showCompleted();
+        } catch (err) {
+            showToast('Failed: ' + err.message, 'error');
+        }
+    }
+
+    loadPositionData();
+</script>
+</body>
+</html>

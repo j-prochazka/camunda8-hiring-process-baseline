@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evaluate &amp; Shortlist Candidates</title>
+    <link rel="stylesheet" href="/tasks/common.css">
+    <style>
+        tr.selected { background: #e8f5e9; }
+        tr.candidate { cursor: pointer; }
+        tr.candidate:hover { background: #f0f4ff; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Evaluate &amp; Shortlist Candidates</h1>
+    <div class="task-id" id="task-key-display"></div>
+
+    <div class="card">
+        <h2>Position</h2>
+        <div class="info-row"><span class="label">Title:</span> <span id="positionTitle">-</span></div>
+        <div class="info-row"><span class="label">Department:</span> <span id="positionDepartment">-</span></div>
+    </div>
+
+    <div class="card">
+        <h2>Candidates</h2>
+        <p style="color:#666; margin-bottom:16px;">Select candidates to shortlist for interviews.</p>
+        <table>
+            <thead>
+                <tr>
+                    <th style="width:40px;"></th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Applied</th>
+                </tr>
+            </thead>
+            <tbody id="candidates-body">
+                <tr><td colspan="4" style="text-align:center; color:#999; padding:24px;">Loading candidates...</td></tr>
+            </tbody>
+        </table>
+        <div class="btn-row">
+            <button class="btn btn-primary" onclick="handleSubmit()">Submit Shortlist</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/tasks/common.js"></script>
+<script>
+    let positionId = null;
+
+    async function loadData() {
+        const vars = await getTaskVariables();
+        positionId = vars.jobPositionId || vars.positionId || null;
+
+        if (positionId) {
+            const pos = await fetch('/api/positions/' + positionId).then(r => r.json());
+            if (pos.title) document.getElementById('positionTitle').textContent = pos.title;
+            if (pos.department) document.getElementById('positionDepartment').textContent = pos.department;
+        }
+
+        await loadCandidates();
+    }
+
+    async function loadCandidates() {
+        if (!positionId) {
+            document.getElementById('candidates-body').innerHTML =
+                '<tr><td colspan="4" style="text-align:center;color:#999;padding:24px;">No positionId available — cannot load candidates</td></tr>';
+            return;
+        }
+
+        const resp = await fetch('/api/applications?positionId=' + positionId);
+        const apps = await resp.json();
+        const tbody = document.getElementById('candidates-body');
+
+        if (apps.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;padding:24px;">No applications received</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = apps.map(a => `
+            <tr class="candidate" onclick="this.querySelector('input').click()">
+                <td><input type="checkbox" value="${a.id}" data-name="${(a.candidateName || '').replace(/"/g, '&quot;')}" data-email="${(a.candidateEmail || '').replace(/"/g, '&quot;')}" onclick="event.stopPropagation(); this.closest('tr').classList.toggle('selected', this.checked)"></td>
+                <td>${a.candidateName || '-'}</td>
+                <td>${a.candidateEmail || '-'}</td>
+                <td>${a.appliedAt ? a.appliedAt.replace('T', ' ').substring(0, 19) : '-'}</td>
+            </tr>
+        `).join('');
+    }
+
+    async function handleSubmit() {
+        const checkboxes = document.querySelectorAll('#candidates-body input[type="checkbox"]:checked');
+        const shortlisted = Array.from(checkboxes).map(cb => ({
+            applicationId: parseInt(cb.value),
+            candidateName: cb.dataset.name,
+            candidateEmail: cb.dataset.email
+        }));
+
+        if (shortlisted.length === 0) {
+            showToast('Please select at least one candidate', 'error');
+            return;
+        }
+
+        try {
+            await completeTask({
+                shortlistedCandidates: shortlisted
+            });
+            showCompleted();
+        } catch (err) {
+            showToast('Failed: ' + err.message, 'error');
+        }
+    }
+
+    loadData();
+</script>
+</body>
+</html>

@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HR Hiring Portal</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; }
+        .container { max-width: 960px; margin: 0 auto; padding: 24px; }
+        h1 { margin-bottom: 24px; }
+        h2 { margin-bottom: 16px; }
+
+        table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid #eee; }
+        th { background: #f9f9f9; font-weight: 600; }
+        tr.clickable { cursor: pointer; }
+        tr.clickable:hover { background: #f0f4ff; }
+        .empty { padding: 24px; text-align: center; color: #999; }
+
+        .form-section { background: #fff; border-radius: 8px; padding: 32px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .form-section h2 { margin-bottom: 4px; }
+        .form-section .subtitle { color: #666; margin-bottom: 20px; font-size: 14px; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 14px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; font-family: inherit; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .form-group input:focus, .form-group textarea:focus { outline: none; border-color: #4a90d9; box-shadow: 0 0 0 2px rgba(74,144,217,0.2); }
+
+        .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; }
+        .btn { padding: 8px 20px; border: none; border-radius: 4px; font-size: 14px; cursor: pointer; }
+        .btn-primary { background: #4a90d9; color: #fff; }
+        .btn-primary:hover { background: #3a7bc8; }
+        .btn-secondary { background: #e0e0e0; color: #333; }
+        .btn-secondary:hover { background: #d0d0d0; }
+
+        .toast { position: fixed; bottom: 24px; right: 24px; padding: 12px 24px; border-radius: 6px; color: #fff; font-size: 14px; z-index: 200; display: none; }
+        .toast.success { background: #4caf50; display: block; }
+        .toast.error { background: #e53935; display: block; }
+
+        .back-link { cursor: pointer; color: #4a90d9; font-size: 14px; margin-bottom: 12px; display: inline-block; }
+        .back-link:hover { text-decoration: underline; }
+
+        .position-details { margin-bottom: 20px; font-size: 14px; line-height: 1.6; }
+        .position-details span { color: #666; }
+
+        .links-panel { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 24px; }
+        .links-group { background: #fff; border-radius: 8px; padding: 12px 16px; box-shadow: 0 1px 3px rgba(0,0,0,.08); display: flex; flex-direction: column; gap: 6px; min-width: 190px; }
+        .links-group h3 { margin: 0 0 4px; font-size: 13px; color: #666; text-transform: uppercase; letter-spacing: .04em; }
+        .links-group a { font-size: 14px; color: #4a90d9; text-decoration: none; }
+        .links-group a:hover { text-decoration: underline; }
+        .links-group a.disabled { color: #aaa; pointer-events: none; }
+        .links-group input { padding: 6px 8px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:24px;">
+        <h1 style="margin:0;">HR Hiring Portal</h1>
+        <div style="display:flex; align-items:center; gap:16px;">
+            <a href="/email-inbox.html" style="display:flex; align-items:center; gap:6px; font-size:14px; color:#4a90d9; text-decoration:none;"><span style="font-size:16px; line-height:1;">📬</span> Email Inbox</a>
+            <a href="/artemis.html" style="display:flex; align-items:center; gap:6px; font-size:14px; color:#4a90d9; text-decoration:none;"><span style="font-size:16px; line-height:1;">🗂</span> Artemis Monitor</a>
+        </div>
+    </div>
+
+    <div id="links-section" class="links-panel">
+        <div class="links-group">
+            <h3>Data &amp; tools</h3>
+            <a href="/api/positions" target="_blank">Positions (JSON)</a>
+            <a href="/api/applications" target="_blank">Applications (JSON)</a>
+            <a href="/h2-console" target="_blank">H2 Console</a>
+            <a href="/artemis/queues" target="_blank">Artemis queues (JSON)</a>
+            <a href="/api/emails" target="_blank">Emails (JSON)</a>
+        </div>
+        <div class="links-group">
+            <h3>Camunda</h3>
+            <a href="http://localhost:8088/operate" target="_blank">Operate</a>
+            <a href="http://localhost:8088/tasklist" target="_blank">Tasklist</a>
+        </div>
+        <div class="links-group">
+            <h3>User task screens</h3>
+            <input type="text" id="task-key" placeholder="User task key (from Operate / Tasklist)" oninput="updateTaskLinks()">
+            <a data-page="job-position-specification" href="#">Job Position Specification</a>
+            <a data-page="job-position-validation" href="#">Job Position Validation</a>
+            <a data-page="evaluate-shortlist" href="#">Evaluate &amp; Shortlist</a>
+            <a data-page="interview-candidate" href="#">Interview Candidate</a>
+            <a data-page="final-candidate-selection" href="#">Final Candidate Selection</a>
+        </div>
+    </div>
+
+    <div id="positions-section">
+        <h2>Open Positions</h2>
+        <table id="positions-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Title</th>
+                    <th>Department</th>
+                    <th>Location</th>
+                    <th>Deadline</th>
+                </tr>
+            </thead>
+            <tbody id="positions-body"></tbody>
+        </table>
+    </div>
+
+    <div id="apply-section" style="display:none">
+        <span class="back-link" onclick="showPositions()">&larr; Back to positions</span>
+        <div class="form-section">
+            <h2 id="apply-title"></h2>
+            <div class="position-details" id="apply-details"></div>
+            <hr style="border:none; border-top:1px solid #eee; margin-bottom:20px;">
+            <h2>Submit Your Application</h2>
+            <form id="application-form" onsubmit="submitApplication(event)">
+                <div class="form-group">
+                    <label for="candidateName">Full Name *</label>
+                    <input type="text" id="candidateName" required>
+                </div>
+                <div class="form-group">
+                    <label for="candidateEmail">Email *</label>
+                    <input type="email" id="candidateEmail" required>
+                </div>
+                <div class="form-group">
+                    <label for="resumeUrl">Resume URL</label>
+                    <input type="url" id="resumeUrl" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label for="coverLetter">Cover Letter</label>
+                    <textarea id="coverLetter" placeholder="Tell us why you're a great fit..."></textarea>
+                </div>
+                <div class="btn-row">
+                    <button type="button" class="btn btn-secondary" onclick="showPositions()">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Submit Application</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+    let currentPosition = null;
+
+    function updateTaskLinks() {
+        const key = document.getElementById('task-key').value.trim();
+        document.querySelectorAll('[data-page]').forEach(a => {
+            a.href = key ? `/tasks/${a.dataset.page}/${encodeURIComponent(key)}` : '#';
+            a.target = '_blank';
+            a.classList.toggle('disabled', !key);
+        });
+    }
+    updateTaskLinks();
+
+    async function loadPositions() {
+        const resp = await fetch('/api/positions');
+        const positions = await resp.json();
+        const tbody = document.getElementById('positions-body');
+
+        if (positions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="empty">No open positions</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML = positions.map(p => `
+            <tr class="clickable" onclick='openApplyForm(${JSON.stringify(p).replace(/'/g, "&#39;")})'>
+                <td>${p.id}</td>
+                <td>${p.title || '-'}</td>
+                <td>${p.department || '-'}</td>
+                <td>${p.location || '-'}</td>
+                <td>${p.applicationDeadline || '-'}</td>
+            </tr>
+        `).join('');
+    }
+
+    function openApplyForm(position) {
+        currentPosition = position;
+
+        document.getElementById('positions-section').style.display = 'none';
+        document.getElementById('apply-section').style.display = '';
+
+        document.getElementById('apply-title').textContent = position.title || 'Position';
+        document.getElementById('apply-details').innerHTML =
+            (position.department ? '<span>Department:</span> ' + position.department + '<br>' : '') +
+            (position.location ? '<span>Location:</span> ' + position.location + '<br>' : '') +
+            (position.applicationDeadline ? '<span>Deadline:</span> ' + position.applicationDeadline + '<br>' : '') +
+            (position.description ? '<br>' + position.description : '');
+
+        document.getElementById('application-form').reset();
+    }
+
+    function showPositions() {
+        document.getElementById('positions-section').style.display = '';
+        document.getElementById('apply-section').style.display = 'none';
+        currentPosition = null;
+    }
+
+    async function submitApplication(e) {
+        e.preventDefault();
+
+        const payload = {
+            candidateName: document.getElementById('candidateName').value,
+            candidateEmail: document.getElementById('candidateEmail').value,
+            resumeUrl: document.getElementById('resumeUrl').value || null,
+            coverLetter: document.getElementById('coverLetter').value || null,
+            jobPositionId: currentPosition.id
+        };
+
+        try {
+            const resp = await fetch('/api/applications', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            if (!resp.ok) throw new Error('Failed to submit');
+
+            showPositions();
+            showToast('Application submitted successfully!', 'success');
+        } catch (err) {
+            showToast('Failed to submit application', 'error');
+        }
+    }
+
+    function showToast(message, type) {
+        const toast = document.getElementById('toast');
+        toast.textContent = message;
+        toast.className = 'toast ' + type;
+        setTimeout(() => { toast.className = 'toast'; }, 3000);
+    }
+
+    loadPositions();
+</script>
+</body>
+</html>

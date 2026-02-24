@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Inbox</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #f5f5f5; color: #333; height: 100vh; display: flex; flex-direction: column; }
+
+        .topbar { background: #fff; border-bottom: 1px solid #ddd; padding: 12px 24px; display: flex; align-items: center; gap: 16px; }
+        .topbar h1 { font-size: 18px; }
+        .topbar a { font-size: 13px; color: #4a90d9; text-decoration: none; }
+        .topbar a:hover { text-decoration: underline; }
+        .refresh-btn { margin-left: auto; padding: 6px 14px; background: #4a90d9; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; }
+        .refresh-btn:hover { background: #3a7bc8; }
+        .email-count { font-size: 13px; color: #666; }
+
+        .layout { display: flex; flex: 1; overflow: hidden; }
+
+        /* Email list panel */
+        .email-list { width: 340px; min-width: 260px; background: #fff; border-right: 1px solid #ddd; overflow-y: auto; flex-shrink: 0; }
+        .email-item { padding: 14px 16px; border-bottom: 1px solid #eee; cursor: pointer; transition: background 0.1s; }
+        .email-item:hover { background: #f0f4ff; }
+        .email-item.active { background: #e8f0fe; border-left: 3px solid #4a90d9; }
+        .email-item .subject { font-weight: 600; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .email-item .meta { font-size: 12px; color: #888; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .email-item .date { font-size: 11px; color: #aaa; margin-top: 2px; }
+        .empty-list { padding: 32px 16px; text-align: center; color: #999; font-size: 14px; }
+
+        /* Email detail panel */
+        .email-detail { flex: 1; overflow-y: auto; padding: 24px 32px; }
+        .no-selection { display: flex; align-items: center; justify-content: center; height: 100%; color: #aaa; font-size: 15px; }
+
+        .email-header { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
+        .email-header h2 { font-size: 18px; margin-bottom: 12px; }
+        .email-header .field { font-size: 13px; margin-bottom: 6px; color: #555; }
+        .email-header .field strong { color: #333; min-width: 50px; display: inline-block; }
+        .email-body { font-size: 14px; line-height: 1.7; white-space: pre-wrap; background: #fafafa; border: 1px solid #eee; border-radius: 4px; padding: 16px; }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h1>📬 Email Inbox</h1>
+    <a href="/">&larr; Back to Portal</a>
+    <span class="email-count" id="email-count"></span>
+    <button class="refresh-btn" onclick="loadEmails()">Refresh</button>
+</div>
+
+<div class="layout">
+    <div class="email-list" id="email-list">
+        <div class="empty-list">Loading...</div>
+    </div>
+    <div class="email-detail" id="email-detail">
+        <div class="no-selection">Select an email to read it</div>
+    </div>
+</div>
+
+<script>
+    let emails = [];
+
+    async function loadEmails() {
+        try {
+            const resp = await fetch('/api/emails');
+            emails = await resp.json();
+            renderList();
+            document.getElementById('email-count').textContent = emails.length + ' message' + (emails.length !== 1 ? 's' : '');
+        } catch (err) {
+            document.getElementById('email-list').innerHTML = '<div class="empty-list">Failed to load emails: ' + err.message + '</div>';
+        }
+    }
+
+    function renderList() {
+        const list = document.getElementById('email-list');
+        if (emails.length === 0) {
+            list.innerHTML = '<div class="empty-list">No emails yet</div>';
+            return;
+        }
+        list.innerHTML = emails.map((e, i) => `
+            <div class="email-item" id="item-${i}" onclick="openEmail(${i})">
+                <div class="subject">${escHtml(e.subject || '(no subject)')}</div>
+                <div class="meta">To: ${escHtml(e.to || '')}</div>
+                <div class="date">${formatDate(e.sentDate)}</div>
+            </div>
+        `).join('');
+    }
+
+    function openEmail(index) {
+        document.querySelectorAll('.email-item').forEach(el => el.classList.remove('active'));
+        document.getElementById('item-' + index).classList.add('active');
+
+        const e = emails[index];
+        document.getElementById('email-detail').innerHTML = `
+            <div class="email-header">
+                <h2>${escHtml(e.subject || '(no subject)')}</h2>
+                <div class="field"><strong>From:</strong> ${escHtml(e.from || '')}</div>
+                <div class="field"><strong>To:</strong> ${escHtml(e.to || '')}</div>
+                <div class="field"><strong>Date:</strong> ${formatDate(e.sentDate)}</div>
+            </div>
+            <div class="email-body">${escHtml(e.body || '')}</div>
+        `;
+    }
+
+    function escHtml(str) {
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function formatDate(iso) {
+        if (!iso) return '-';
+        return new Date(iso).toLocaleString();
+    }
+
+    loadEmails();
+</script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Final Candidate Selection</title>
+    <link rel="stylesheet" href="/tasks/common.css">
+    <style>
+        .candidate-card { border: 2px solid #eee; border-radius: 6px; padding: 16px; margin-bottom: 12px; cursor: pointer; transition: border-color 0.15s; }
+        .candidate-card:hover { border-color: #4a90d9; }
+        .candidate-card.selected { border-color: #4caf50; background: #e8f5e9; }
+        .candidate-card h3 { margin-bottom: 4px; }
+        .candidate-card .meta { color: #666; font-size: 13px; }
+        .candidate-card .recommendation { margin-top: 8px; font-size: 13px; }
+        .recommendation .tag { display: inline-block; padding: 2px 8px; border-radius: 3px; font-weight: 500; }
+        .tag-strong-hire { background: #c8e6c9; color: #2e7d32; }
+        .tag-hire { background: #dcedc8; color: #558b2f; }
+        .tag-no-hire { background: #ffe0b2; color: #e65100; }
+        .tag-strong-no-hire { background: #ffcdd2; color: #c62828; }
+        .notes-preview { margin-top: 6px; font-size: 12px; color: #888; font-style: italic; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Final Candidate Selection</h1>
+    <div class="task-id" id="task-key-display"></div>
+
+    <div class="card">
+        <h2>Position</h2>
+        <div class="info-row"><span class="label">Title:</span> <span id="positionTitle">-</span></div>
+        <div class="info-row"><span class="label">Department:</span> <span id="positionDepartment">-</span></div>
+    </div>
+
+    <div class="card">
+        <h2>Interviewed Candidates</h2>
+        <p style="color:#666; margin-bottom:16px;">Select the candidate to hire, or choose "No Hire" if none are suitable.</p>
+        <div id="candidates-list">
+            <p style="color:#999; text-align:center; padding:24px;">Loading candidates from process variables...</p>
+        </div>
+        <div class="btn-row">
+            <button class="btn btn-danger" onclick="handleNoHire()">No Hire</button>
+            <button class="btn btn-success" id="hire-btn" onclick="handleHire()" disabled>Hire Selected Candidate</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/tasks/common.js"></script>
+<script>
+    let selectedCandidate = null;
+    let candidates = [];
+
+    async function loadData() {
+        try {
+            const vars = await getTaskVariables();
+
+            const positionId = vars.jobPositionId || null;
+            if (positionId) {
+                const pos = await fetch('/api/positions/' + positionId).then(r => r.json());
+                if (pos.title) document.getElementById('positionTitle').textContent = pos.title;
+                if (pos.department) document.getElementById('positionDepartment').textContent = pos.department;
+            }
+
+            // Get the interviewed candidates list from the process variable
+            candidates = vars.shortlistedInterviewedCandidates || [];
+            renderCandidates();
+        } catch (err) {
+            document.getElementById('candidates-list').innerHTML =
+                '<p style="color:#e53935; text-align:center; padding:24px;">Failed to load task variables: ' + err.message + '</p>';
+        }
+    }
+
+    function renderCandidates() {
+        const container = document.getElementById('candidates-list');
+
+        if (!candidates || candidates.length === 0) {
+            container.innerHTML = '<p style="color:#999; text-align:center; padding:24px;">No interviewed candidates found.</p>';
+            return;
+        }
+
+        container.innerHTML = candidates.map((c, i) => {
+            const tagClass = (c.recommendation || '').toLowerCase().replace(/_/g, '-');
+            return `
+                <div class="candidate-card" data-index="${i}" onclick="selectCandidate(${i}, this)">
+                    <h3>${c.candidateName || 'Unknown'}</h3>
+                    <div class="meta">${c.candidateEmail || ''}</div>
+                    ${c.interviewRating ? '<div class="meta">Rating: ' + c.interviewRating + '/5</div>' : ''}
+                    ${c.recommendation ? '<div class="recommendation"><span class="tag tag-' + tagClass + '">' + c.recommendation.replace(/_/g, ' ') + '</span></div>' : ''}
+                    ${c.interviewNotes ? '<div class="notes-preview">Notes: ' + c.interviewNotes.substring(0, 120) + (c.interviewNotes.length > 120 ? '...' : '') + '</div>' : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function selectCandidate(index, el) {
+        document.querySelectorAll('.candidate-card').forEach(c => c.classList.remove('selected'));
+        el.classList.add('selected');
+        selectedCandidate = candidates[index];
+        document.getElementById('hire-btn').disabled = false;
+    }
+
+    async function handleHire() {
+        if (!selectedCandidate) return;
+        try {
+            await completeTask({
+                candidateChosen: true,
+                hiredCandidateName: selectedCandidate.candidateName,
+                hiredCandidateEmail: selectedCandidate.candidateEmail
+            });
+            showCompleted();
+        } catch (err) {
+            showToast('Failed: ' + err.message, 'error');
+        }
+    }
+
+    async function handleNoHire() {
+        try {
+            await completeTask({
+                candidateChosen: false,
+                hiredCandidateName: null,
+                hiredCandidateEmail: null
+            });
+            showCompleted();
+        } catch (err) {
+            showToast('Failed: ' + err.message, 'error');
+        }
+    }
+
+    loadData();
+</script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Position Specification</title>
+    <link rel="stylesheet" href="/tasks/common.css">
+</head>
+<body>
+<div class="container">
+    <h1>Job Position Specification</h1>
+    <div class="task-id" id="task-key-display"></div>
+
+    <div class="card">
+        <h2>Define the Position</h2>
+        <form id="spec-form" onsubmit="handleSubmit(event)">
+            <div class="form-group">
+                <label for="title">Position Title *</label>
+                <input type="text" id="title" required>
+            </div>
+            <div class="form-group">
+                <label for="description">Description *</label>
+                <textarea id="description" required placeholder="Describe the role, responsibilities, and requirements..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="department">Department *</label>
+                <input type="text" id="department" required>
+            </div>
+            <div class="form-group">
+                <label for="location">Location *</label>
+                <input type="text" id="location" required>
+            </div>
+            <div class="form-group">
+                <label for="requester">Requester (Your Name) *</label>
+                <input type="text" id="requester" required>
+            </div>
+            <div class="form-group">
+                <label for="requesterEmail">Requester Email *</label>
+                <input type="email" id="requesterEmail" required placeholder="name@company.com">
+            </div>
+            <div class="form-group">
+                <label for="applicationDeadline">Application Deadline *</label>
+                <input type="date" id="applicationDeadline" required>
+            </div>
+            <script>
+                document.getElementById('applicationDeadline').min = new Date().toISOString().split('T')[0];
+            </script>
+            <div class="form-group">
+                <label for="expectedSalary">Expected Monthly Salary *</label>
+                <input type="number" id="expectedSalary" required min="0" step="100" placeholder="e.g. 5000">
+            </div>
+            <div class="form-group">
+                <label for="managerialPosition" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <input type="checkbox" id="managerialPosition" style="width:auto;">
+                    Managerial Position
+                </label>
+            </div>
+            <div class="btn-row">
+                <button type="submit" class="btn btn-primary">Submit Specification</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="/tasks/common.js"></script>
+<script>
+    async function handleSubmit(e) {
+        e.preventDefault();
+        try {
+            const expectedSalary = parseInt(document.getElementById('expectedSalary').value);
+            const managerialPosition = document.getElementById('managerialPosition').checked;
+
+            await completeTask({
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                department: document.getElementById('department').value,
+                location: document.getElementById('location').value,
+                requester: document.getElementById('requester').value,
+                requesterEmail: document.getElementById('requesterEmail').value,
+                applicationDeadline: document.getElementById('applicationDeadline').value,
+                expectedSalary: expectedSalary,
+                managerialPosition: managerialPosition
+            });
+            showCompleted();
+        } catch (err) {
+            showToast('Failed: ' + err.message, 'error');
+        }
+    }
+</script>
+</body>
+</html>
