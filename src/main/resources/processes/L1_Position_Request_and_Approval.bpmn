@@ -1,0 +1,246 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:zeebe="http://camunda.org/schema/zeebe/1.0" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_1phfgf2" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.52.0" modeler:executionPlatform="Camunda Cloud" modeler:executionPlatformVersion="8.8.0">
+  <bpmn:process id="jprdemo_jobPositionRequestApprovalProcess_v1" name="JPRDEMO Job Position Request &#38; Approval" isExecutable="true">
+    <bpmn:serviceTask id="sendEmail" name="Email Position Requester (Rejected)">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="jprdemo_com.kyndryl.camunda:sendEmail:1" />
+        <zeebe:taskHeaders>
+          <zeebe:header key="emailType" value="POSITION_REJECTED" />
+        </zeebe:taskHeaders>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1i7fhhf</bpmn:incoming>
+      <bpmn:outgoing>Flow_1f6cltt</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_0h38ux7" name="Position Approved?">
+      <bpmn:incoming>Flow_0oitf99</bpmn:incoming>
+      <bpmn:outgoing>Flow_1i7fhhf</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0yoxixr</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:serviceTask id="savePositionToDatabase" name="Save Job Position to Database">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="jprdemo_com.kyndryl.camunda:saveJobPosition:1" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0yoxixr</bpmn:incoming>
+      <bpmn:incoming>Flow_0ft1j9u</bpmn:incoming>
+      <bpmn:outgoing>Flow_1a2tmdv</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:userTask id="jobPositionApproval" name="Job Position Approval">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition formId="jobPositionApprovalForm_v1" />
+        <zeebe:ioMapping>
+          <zeebe:output source="=approved = &#34;true&#34;" target="approved" />
+          <zeebe:output source="=approvalComment" target="approvalComment" />
+        </zeebe:ioMapping>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_03tn67p</bpmn:incoming>
+      <bpmn:outgoing>Flow_0oitf99</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="jobPositionSpecification" name="Job Position Specification">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition externalReference="jobPositionSpecification_v1" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0u58p0x</bpmn:incoming>
+      <bpmn:incoming>Flow_0sval23</bpmn:incoming>
+      <bpmn:outgoing>Flow_18u1pq9</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:userTask id="jobPositionValidation" name="Job Position Validation">
+      <bpmn:extensionElements>
+        <zeebe:userTask />
+        <zeebe:formDefinition externalReference="jobPositionValidation_v1" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_18u1pq9</bpmn:incoming>
+      <bpmn:outgoing>Flow_0j3atv5</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_10bjw16" name="Further Approval Required?">
+      <bpmn:incoming>Flow_1b9r0gj</bpmn:incoming>
+      <bpmn:outgoing>Flow_0ft1j9u</bpmn:outgoing>
+      <bpmn:outgoing>Flow_03tn67p</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:startEvent id="Event_1wzijdo" name="Open Job Position">
+      <bpmn:outgoing>Flow_0u58p0x</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:exclusiveGateway id="Gateway_1m7q763" name="HR check result?">
+      <bpmn:incoming>Flow_0j3atv5</bpmn:incoming>
+      <bpmn:outgoing>Flow_0sval23</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1b9r0gj</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:sequenceFlow id="Flow_1f6cltt" sourceRef="sendEmail" targetRef="Event_1qyrhqs" />
+    <bpmn:sequenceFlow id="Flow_1i7fhhf" name="No" sourceRef="Gateway_0h38ux7" targetRef="sendEmail">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=not(approved)</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0oitf99" sourceRef="jobPositionApproval" targetRef="Gateway_0h38ux7" />
+    <bpmn:sequenceFlow id="Flow_0yoxixr" name="Yes" sourceRef="Gateway_0h38ux7" targetRef="savePositionToDatabase">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=approved</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0ft1j9u" name="No" sourceRef="Gateway_10bjw16" targetRef="savePositionToDatabase">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=managerialPosition = false and expectedSalary &lt;= 6700</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_03tn67p" name="Yes" sourceRef="Gateway_10bjw16" targetRef="jobPositionApproval">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=managerialPosition = true or expectedSalary &gt; 6700</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0u58p0x" sourceRef="Event_1wzijdo" targetRef="jobPositionSpecification" />
+    <bpmn:sequenceFlow id="Flow_0sval23" name="NOK" sourceRef="Gateway_1m7q763" targetRef="jobPositionSpecification">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=hrCheckResult = "NOK"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_18u1pq9" sourceRef="jobPositionSpecification" targetRef="jobPositionValidation" />
+    <bpmn:sequenceFlow id="Flow_0j3atv5" sourceRef="jobPositionValidation" targetRef="Gateway_1m7q763" />
+    <bpmn:sequenceFlow id="Flow_1b9r0gj" name="OK" sourceRef="Gateway_1m7q763" targetRef="Gateway_10bjw16">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">=hrCheckResult = "OK"</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:endEvent id="Event_1qyrhqs" name="Job Position Rejected">
+      <bpmn:extensionElements />
+      <bpmn:incoming>Flow_1f6cltt</bpmn:incoming>
+      <bpmn:errorEventDefinition id="ErrorEventDefinition_1k42j1h" errorRef="Error_0h0j21e" />
+    </bpmn:endEvent>
+    <bpmn:endEvent id="Event_1xvdd0z" name="Publish in the Hiring Portal">
+      <bpmn:extensionElements>
+        <zeebe:taskDefinition type="jprdemo_com.kyndryl.camunda_publishToHiringPortals:1" />
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1a2tmdv</bpmn:incoming>
+      <bpmn:messageEventDefinition id="MessageEventDefinition_13oa8wh" />
+    </bpmn:endEvent>
+    <bpmn:sequenceFlow id="Flow_1a2tmdv" sourceRef="savePositionToDatabase" targetRef="Event_1xvdd0z" />
+    <bpmn:textAnnotation id="TextAnnotation_1xcycaa">
+      <bpmn:text>Why do we need this step here?</bpmn:text>
+    </bpmn:textAnnotation>
+    <bpmn:association id="Association_0mie6j0" associationDirection="None" sourceRef="savePositionToDatabase" targetRef="TextAnnotation_1xcycaa" />
+  </bpmn:process>
+  <bpmn:error id="Error_0h0j21e" name="Job Position Rejected" errorCode="jobPositionRejected" />
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="jprdemo_jobPositionRequestApprovalProcess_v1">
+      <bpmndi:BPMNShape id="Activity_104m9ue_di" bpmnElement="sendEmail">
+        <dc:Bounds x="904" y="420" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0h38ux7_di" bpmnElement="Gateway_0h38ux7" isMarkerVisible="true">
+        <dc:Bounds x="929" y="335" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="989" y="346" width="54" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0qd6i8j_di" bpmnElement="savePositionToDatabase">
+        <dc:Bounds x="904" y="170" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_04bksw1" bpmnElement="jobPositionApproval">
+        <dc:Bounds x="790" y="320" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1djx27m_di" bpmnElement="jobPositionSpecification">
+        <dc:Bounds x="274" y="240" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1gudrj1_di" bpmnElement="jobPositionValidation">
+        <dc:Bounds x="430" y="240" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_10bjw16_di" bpmnElement="Gateway_10bjw16" isMarkerVisible="true">
+        <dc:Bounds x="665" y="255" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="725" y="267" width="82" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_10642qc" bpmnElement="Event_1wzijdo">
+        <dc:Bounds x="182" y="262" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="155" y="305" width="90" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_1m7q763_di" bpmnElement="Gateway_1m7q763" isMarkerVisible="true">
+        <dc:Bounds x="559" y="255" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="542" y="231" width="84" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_148kk0e_di" bpmnElement="Event_1xvdd0z">
+        <dc:Bounds x="1076" y="192" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1061" y="235" width="67" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1rufyr8_di" bpmnElement="Event_1qyrhqs">
+        <dc:Bounds x="936" y="542" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="924" y="585" width="60" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="TextAnnotation_1xcycaa_di" bpmnElement="TextAnnotation_1xcycaa">
+        <dc:Bounds x="904" y="80" width="100" height="55" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1f6cltt_di" bpmnElement="Flow_1f6cltt">
+        <di:waypoint x="954" y="500" />
+        <di:waypoint x="954" y="542" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1i7fhhf_di" bpmnElement="Flow_1i7fhhf">
+        <di:waypoint x="954" y="385" />
+        <di:waypoint x="954" y="420" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="962" y="398" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0oitf99_di" bpmnElement="Flow_0oitf99">
+        <di:waypoint x="890" y="360" />
+        <di:waypoint x="929" y="360" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0yoxixr_di" bpmnElement="Flow_0yoxixr">
+        <di:waypoint x="954" y="335" />
+        <di:waypoint x="954" y="250" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="960" y="290" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0ft1j9u_di" bpmnElement="Flow_0ft1j9u">
+        <di:waypoint x="690" y="255" />
+        <di:waypoint x="690" y="210" />
+        <di:waypoint x="904" y="210" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="697" y="223" width="15" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_03tn67p_di" bpmnElement="Flow_03tn67p">
+        <di:waypoint x="690" y="305" />
+        <di:waypoint x="690" y="360" />
+        <di:waypoint x="790" y="360" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="696" y="328" width="18" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0u58p0x_di" bpmnElement="Flow_0u58p0x">
+        <di:waypoint x="218" y="280" />
+        <di:waypoint x="274" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0sval23_di" bpmnElement="Flow_0sval23">
+        <di:waypoint x="584" y="305" />
+        <di:waypoint x="584" y="370" />
+        <di:waypoint x="324" y="370" />
+        <di:waypoint x="324" y="320" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="442" y="352" width="24" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_18u1pq9_di" bpmnElement="Flow_18u1pq9">
+        <di:waypoint x="374" y="280" />
+        <di:waypoint x="430" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0j3atv5_di" bpmnElement="Flow_0j3atv5">
+        <di:waypoint x="530" y="280" />
+        <di:waypoint x="559" y="280" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1b9r0gj_di" bpmnElement="Flow_1b9r0gj">
+        <di:waypoint x="609" y="280" />
+        <di:waypoint x="665" y="280" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="626" y="262" width="16" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1a2tmdv_di" bpmnElement="Flow_1a2tmdv">
+        <di:waypoint x="1004" y="210" />
+        <di:waypoint x="1076" y="210" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Association_0mie6j0_di" bpmnElement="Association_0mie6j0">
+        <di:waypoint x="954" y="170" />
+        <di:waypoint x="954" y="135" />
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

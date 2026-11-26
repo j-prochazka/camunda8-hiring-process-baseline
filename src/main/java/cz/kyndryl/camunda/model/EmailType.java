@@ -1,0 +1,10 @@
+package cz.kyndryl.camunda.model;
+
+public enum EmailType {
+    POSITION_REJECTED,
+    CANDIDATE_REJECTED,
+    NOBODY_HIRED,
+    CANDIDATE_HIRED_TO_REQUESTOR,
+    CANDIDATE_HIRED_TO_CANDIDATE,
+    INTERVIEW_INVITATION
+}

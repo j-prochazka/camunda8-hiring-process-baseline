@@ -1,0 +1,171 @@
+{
+  "components": [
+    {
+      "text": "# Job Position Approval\n\nReview the position details below and decide whether to approve or reject.",
+      "type": "text",
+      "id": "Field_heading",
+      "layout": {
+        "row": "Row_0g3upwk"
+      }
+    },
+    {
+      "type": "separator",
+      "id": "Field_sep1",
+      "layout": {
+        "row": "Row_09b42ql"
+      }
+    },
+    {
+      "label": "Position Title",
+      "type": "textfield",
+      "id": "Field_title",
+      "key": "title",
+      "readonly": true,
+      "layout": {
+        "row": "Row_title_dept",
+        "columns": 8
+      }
+    },
+    {
+      "label": "Department",
+      "type": "textfield",
+      "id": "Field_department",
+      "key": "department",
+      "readonly": true,
+      "layout": {
+        "row": "Row_title_dept",
+        "columns": 8
+      }
+    },
+    {
+      "label": "Location",
+      "type": "textfield",
+      "id": "Field_location",
+      "key": "location",
+      "readonly": true,
+      "layout": {
+        "row": "Row_loc_deadline",
+        "columns": 8
+      }
+    },
+    {
+      "label": "Application Deadline",
+      "type": "textfield",
+      "id": "Field_deadline",
+      "key": "applicationDeadline",
+      "readonly": true,
+      "layout": {
+        "row": "Row_loc_deadline",
+        "columns": 8
+      }
+    },
+    {
+      "label": "Requester",
+      "type": "textfield",
+      "id": "Field_requester",
+      "key": "requester",
+      "readonly": true,
+      "layout": {
+        "row": "Row_1gb7y3r"
+      }
+    },
+    {
+      "label": "Requester Email",
+      "type": "textfield",
+      "id": "Field_requesterEmail",
+      "key": "requesterEmail",
+      "readonly": true,
+      "layout": {
+        "row": "Row_requesterEmail"
+      }
+    },
+    {
+      "label": "Position Description",
+      "type": "textarea",
+      "id": "Field_description",
+      "key": "description",
+      "readonly": true,
+      "layout": {
+        "row": "Row_0fn0sl2"
+      }
+    },
+    {
+      "label": "Expected Monthly Salary",
+      "type": "number",
+      "id": "Field_expectedSalary",
+      "key": "expectedSalary",
+      "readonly": true,
+      "layout": {
+        "row": "Row_salary_mgr",
+        "columns": 8
+      }
+    },
+    {
+      "label": "Managerial Position",
+      "type": "checkbox",
+      "id": "Field_managerialPosition",
+      "key": "managerialPosition",
+      "disabled": true,
+      "layout": {
+        "row": "Row_salary_mgr",
+        "columns": 8
+      }
+    },
+    {
+      "type": "separator",
+      "id": "Field_sep2",
+      "layout": {
+        "row": "Row_0wsbflp"
+      }
+    },
+    {
+      "text": "### Decision",
+      "type": "text",
+      "id": "Field_decision_heading",
+      "layout": {
+        "row": "Row_13s2ayb"
+      }
+    },
+    {
+      "label": "Approval Decision",
+      "values": [
+        {
+          "label": "Approve",
+          "value": "true"
+        },
+        {
+          "label": "Reject",
+          "value": "false"
+        }
+      ],
+      "type": "radio",
+      "id": "Field_approved",
+      "key": "approved",
+      "validate": {
+        "required": true
+      },
+      "layout": {
+        "row": "Row_0enq6j9"
+      }
+    },
+    {
+      "label": "Comments",
+      "type": "textarea",
+      "id": "Field_approvalComment",
+      "key": "approvalComment",
+      "description": "Please provide a reason, especially if rejecting the position.",
+      "layout": {
+        "row": "Row_13bkrn6"
+      }
+    }
+  ],
+  "type": "default",
+  "id": "jobPositionApprovalForm_v1",
+  "schemaVersion": 19,
+  "executionPlatform": "Camunda Cloud",
+  "executionPlatformVersion": "8.8.0",
+  "exporter": {
+    "name": "Camunda Modeler",
+    "version": "5.52.0"
+  }
+}
